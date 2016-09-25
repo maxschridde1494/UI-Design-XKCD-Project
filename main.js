@@ -16,7 +16,7 @@ let silverSkin = new Skin ({fill: '#bdc3c7'});
 
 let buttonStyle = new Style({font: '22px', color: 'white'});
 let headlineStyle = new Style({font: '28px', color: '#aaaaaa'});
-let smallStyle = new Style ({font: '20px', color: 'black'});
+let smallStyle = new Style ({font: 'bold 20px', color: 'black'});
 
 // let comicPicUrl = 'http://imgs.xkcd.com/comics/solar_spectrum.png';
 var url = 'http://xkcd.com/info.0.json';
@@ -58,11 +58,13 @@ let MainContainer = Column.template($ => ({
         name: 'comicInfo', height: 50,
         contents: [
           new Label({name: "comicTitle", 
-            left: 0, right: 0, top: 0, bottom: 0,
-            string: "", style: smallStyle
+            // left: 0, right: 0, top: 0, bottom: 0,
+            height: 50,
+            string: "hello", style: smallStyle
           }),
           new Label({name: "comicID", 
-            left: 0, right: 0, top: 0, bottom: 0,
+            // left: 0, right: 0, top: 0, bottom: 0,
+            height: 50,
             string: "", style: smallStyle
           })
         ]
@@ -133,7 +135,7 @@ let LoadButton = Container.template($ => ({
   })
 }));
 
-function updateImageUI (comicUrl, comicTitle, comicNumber, container){
+function updateImageUI (comicUrl, comicTitle, comicNumber){
     let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
 
     currentImageNumber = comicNumber;
