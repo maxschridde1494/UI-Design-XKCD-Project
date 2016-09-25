@@ -25,17 +25,20 @@ var url = 'http://xkcd.com/info.0.json';
 let MainContainer = Column.template($ => ({
     left: 0, right: 0, top: 0, bottom: 0, skin: whiteSkin,
     contents: [
-      new LoadButton(),
-      // new nextButton({skin: buttonSkin, string: "Previous"}),
       new Line({ 
+          name: 'buttons',
           height: 50,
           contents: [
-            new nextButton({next: false, skin: buttonSkin, string: "Previous"}),
-            new nextButton({next: true, skin: buttonSkin, string: "Next"})
-            // new prevButton({skin: buttonSkin, string: "Previous"})
+            new controlButton({skin: buttonSkin, string: "Previous"}),
+            new controlButton({skin: buttonSkin, string: "Next"}),
+            new controlButton({skin: buttonSkin, string: "Random"})
           ]
       }),
       new ComicPane(),
+      new Label({name: "comicTitle", 
+        left: 0, right: 0, top: 0, bottom: 0,
+        string: "", style: smallStyle
+      })
     ]
 }));
 
@@ -45,7 +48,7 @@ let ComicPane = Container.template($ => ({
   contents: []
 }));
 
-let nextButton = Container.template($ =>({
+let controlButton = Container.template($ =>({
   exclusiveTouch: true,
   active: true,
   left: 5,
@@ -61,13 +64,16 @@ let nextButton = Container.template($ =>({
     onTouchEnded: function(container, data){
       var imageNumber;
       var validNext = true;
-      if ($.next){
+      if ($.string == "Next"){
         if (currentImageNumber < latestXKCDComicNumber){
           imageNumber = String(currentImageNumber + 1);
         }else{
           validNext = false;
         }
-      }else {
+      }else if ($.string == "Random"){
+        imageNumber = String(Math.round(Math.random()*latestXKCDComicNumber));
+      }
+      else {
           imageNumber = String(currentImageNumber - 1);
       }
       if (validNext){
@@ -78,8 +84,9 @@ let nextButton = Container.template($ =>({
           // let title = new Label({top: 5, style: smallStyle, string: comicTitle});
           // let number = new Label({top: 5, style: smallStyle, string: comicNumber});
           let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-          application.mainContainer[2].empty();
-          application.mainContainer[2].add(comicImg);
+          application.mainContainer[1].empty();
+          application.mainContainer[1].add(comicImg);
+          application.mainContainer.comicTitle.string = currentImageTitle;
         });
       }
     }
@@ -98,16 +105,18 @@ let LoadButton = Container.template($ => ({
   ],
   behavior: Behavior({
     onTouchEnded(container, id, x, y, ticks) {
-      getImg(false, String(currentImageNumber - 1), function(comicUrl, comicTitle, comicNumber) {
+      var random = Math.round(Math.random()*latestXKCDComicNumber);
+      getImg(false, String(random), function(comicUrl, comicTitle, comicNumber) {
         // let title = new Label({top: 5, style: smallStyle, string: comicTitle});
         // let number = new Label({top: 5, style: smallStyle, string: comicNumber});
         let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
         currentImageNumber = comicNumber;
         currentImageTitle = comicTitle;
         currentImageUrl = comicUrl;
-        container.container[2].empty();
-        container.container[2].add(comicImg);
-        trace(currentImageNumber);
+
+        container.container.comicTitle.string = currentImageTitle;
+        container.container[1].empty();
+        container.container[1].add(comicImg);
       });
     }
   })
@@ -163,11 +172,10 @@ application.behavior = Behavior({
     application.add(mainContainer);
 
     getImg(true, "", function(comicUrl, comicTitle, comicNumber) {
-        let title = new Label({top: 5, style: smallStyle, string: comicTitle});
-        let number = new Label({top: 5, style: smallStyle, string: comicNumber});
         let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-        //FIXME: hard code, bad style, don't do this;
-        application.mainContainer[2].add(comicImg);
+
+        application.mainContainer.comicTitle.string = comicTitle;
+        application.mainContainer[1].add(comicImg);
       });
   }
 });
