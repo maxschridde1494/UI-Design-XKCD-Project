@@ -3,7 +3,7 @@
  */
 
  /*Flickr*/
- const FLICKRSTART = "http://api.flickr.com/services/rest/?";
+ const FLICKRSTART = "https://api.flickr.com/services/rest/?";
  const MYFLICKRUSERID = "60346343@N06";
  const FLICKRAPIKEY = "b5ebd7807ea15f46892d4309b4ec9d73";
  const FLICKRAPISECRECT = "155015b672626031";
@@ -12,12 +12,12 @@ function createFlickrRequest(methodName){
   var requestURL = FLICKRSTART + "&method=" + methodName
                                 + "&api_key=" + FLICKRAPIKEY 
                                 + "&user_id=" + MYFLICKRUSERID;
-                                // + "&format=json";
+                                + "&format=json";
   return requestURL;
  }
 
 function createImageURL(userID, imageID){
-  var imageURL = "http://www.flickr.com/photos/" + userID + "/" + imageID;
+  var imageURL = "https://www.flickr.com/photos/" + userID + "/" + imageID;
   return imageURL;
 }
 
@@ -25,11 +25,12 @@ function createImageURL(userID, imageID){
 function getFlickrImg(url, uiCallback) {
     var message = new Message(url);
     
-    var promise = message.invoke(Message.TEXT);
-    promise.then(text => {
+    var promise = message.invoke(Message.JSON);
+    promise.then(json => {
       if (0 == message.error && 200 == message.status) {
           try {
-            trace(text + '\n');
+            trace(json + '\n');
+            // trace(text[0] + '\n');
             // var imageID = json.photos.photo[0]
             // var imageUserID = json.photos.photo[0].owner;
 
@@ -40,7 +41,7 @@ function getFlickrImg(url, uiCallback) {
           }
       }
       else {
-          trace('Request Failed - Raw Response Body: *'+json+'*'+'\n');
+          trace('Request Failed - Raw Response Body: *' + '\n' +json+'*'+'\n');
       }
     });
 }
