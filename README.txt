@@ -1,0 +1,1 @@
+Project Spec: For this assignment, you will be building a XKCD visualizer in a Kinoma platform of your choice (mobile or web). You will use XKCD's API to fetch comics and display them in your app.  Additionally, you will use the Flickr API to pull an image that relates to the title of the XKCD comic and display that.
