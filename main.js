@@ -21,6 +21,25 @@ let smallStyle = new Style ({font: '20px', color: 'black'});
 // let comicPicUrl = 'http://imgs.xkcd.com/comics/solar_spectrum.png';
 var url = 'http://xkcd.com/info.0.json';
 
+/*Set Up Application*/
+application.behavior = Behavior({
+  onLaunch: function(application){
+    application.active = true;
+    application.empty();
+    let mainContainer = new MainContainer();
+    mainContainer.name = "mainContainer";
+    application.add(mainContainer);
+
+    getImg(true, "", function(comicUrl, comicTitle, comicNumber) {
+        let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+
+        application.mainContainer.comicInfo.comicTitle.string = comicTitle;
+        application.mainContainer.comicInfo.comicID.string = String(comicNumber);
+        application.mainContainer[1].add(comicImg);
+      });
+  }
+});
+
 /* Main screen layout */
 let MainContainer = Column.template($ => ({
     left: 0, right: 0, top: 0, bottom: 0, skin: whiteSkin,
@@ -35,9 +54,18 @@ let MainContainer = Column.template($ => ({
           ]
       }),
       new ComicPane(),
-      new Label({name: "comicTitle", 
-        left: 0, right: 0, top: 0, bottom: 0,
-        string: "", style: smallStyle
+      new Line({
+        name: 'comicInfo', height: 50,
+        contents: [
+          new Label({name: "comicTitle", 
+            left: 0, right: 0, top: 0, bottom: 0,
+            string: "", style: smallStyle
+          }),
+          new Label({name: "comicID", 
+            left: 0, right: 0, top: 0, bottom: 0,
+            string: "", style: smallStyle
+          })
+        ]
       })
     ]
 }));
@@ -114,7 +142,8 @@ function updateImageUI (comicUrl, comicTitle, comicNumber, container){
 
     application.mainContainer[1].empty();
     application.mainContainer[1].add(comicImg);
-    application.mainContainer.comicTitle.string = currentImageTitle;
+    application.mainContainer.comicInfo.comicTitle.string = currentImageTitle;
+    application.mainContainer.comicInfo.comicID.string = String(currentImageNumber);
 
 }
 
@@ -153,25 +182,3 @@ function getImg(bool, comicNumber, uiCallback) {
 function getNextImgURL(imageNumber){
   return 'http://xkcd.com/' + imageNumber + '/info.0.json';
 }
-
-
-
-/*
-Set Up Application
-*/
-application.behavior = Behavior({
-  onLaunch: function(application){
-    application.active = true;
-    application.empty();
-    let mainContainer = new MainContainer();
-    mainContainer.name = "mainContainer";
-    application.add(mainContainer);
-
-    getImg(true, "", function(comicUrl, comicTitle, comicNumber) {
-        let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-
-        application.mainContainer.comicTitle.string = comicTitle;
-        application.mainContainer[1].add(comicImg);
-      });
-  }
-});
