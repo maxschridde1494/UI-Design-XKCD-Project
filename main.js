@@ -2,6 +2,70 @@
  * Homework
  */
 
+ /*Flickr*/
+ const FLICKRSTART = "http://api.flickr.com/services/rest/?";
+ const MYFLICKRUSERID = "60346343@N06";
+ const FLICKRAPIKEY = "b5ebd7807ea15f46892d4309b4ec9d73";
+ const FLICKRAPISECRECT = "155015b672626031";
+
+function createFlickrRequest(methodName){
+  var requestURL = FLICKRSTART + "&method=" + methodName
+                                + "&api_key=[" + FLICKRAPIKEY + "]" 
+                                + "&user_id=[" + MYFLICKRUSERID + "]"
+                                + "&format=json";
+  return requestURL;
+ }
+
+function createImageURL(userID, imageID){
+  var imageURL = "http://www.flickr.com/photos/" + userID + "/" + imageID;
+  return imageURL;
+}
+
+/* Helper function for sending the HTTP request and loading the response */
+function getFlickrImg(url, uiCallback) {
+    var message = new Message(url);
+    
+    var promise = message.invoke(Message.JSON);
+    promise.then(json => {
+      if (0 == message.error && 200 == message.status) {
+          try {
+            var imageID = json.photos.photo.id;
+            var imageUserID = json.photos.photo.owner;
+
+            uiCallback(imageUserID, imageID);           
+          }
+          catch (e) {
+            throw('Web service responded with invalid JSON!\n');
+          }
+      }
+      else {
+          trace('Request Failed - Raw Response Body: *'+json+'*'+'\n');
+      }
+    });
+}
+
+let flickrButton = Container.template($ =>({
+  exclusiveTouch: true,
+  active: true,
+  left: 5,
+  contents:[
+    Label($, { hidden: false, skin: $.skin, string: $.string, style: buttonStyle})
+  ],
+  behavior: Behavior({
+    onTouchEnded: function(container, data){
+      var url = createFlickrRequest("flickr.people.getPublicPhotos");
+      getFlickrImg(url, function(userID, imageID) {
+        var imURL = createImageURL(userID, imageID);
+        updateImageUI(imURL, "Worked", "1");
+      });
+    }
+  })
+}));
+
+ /*
+=====================================
+ */
+
 /*Global Variable*/
 var latestXKCDComicNumber;
 var currentImageNumber;
@@ -50,7 +114,8 @@ let MainContainer = Column.template($ => ({
           contents: [
             new controlButton({skin: buttonSkin, string: "Previous"}),
             new controlButton({skin: buttonSkin, string: "Next"}),
-            new controlButton({skin: buttonSkin, string: "Random"})
+            new controlButton({skin: buttonSkin, string: "Random"}),
+            new flickrButton({skin: buttonSkin, string: "Flickr"})
           ]
       }),
       new ComicPane(),
@@ -58,11 +123,13 @@ let MainContainer = Column.template($ => ({
         name: 'comicInfo', height: 50,
         contents: [
           new Label({name: "comicTitle", 
-            left: 0, right: 0, top: 0, bottom: 0,
+            // left: 0, right: 0, top: 0, bottom: 0,
+            height: 50,
             string: "", style: smallStyle
           }),
           new Label({name: "comicID", 
-            left: 0, right: 0, top: 0, bottom: 0,
+            // left: 0, right: 0, top: 0, bottom: 0,
+            height: 50,
             string: "", style: smallStyle
           })
         ]
@@ -133,7 +200,7 @@ let LoadButton = Container.template($ => ({
   })
 }));
 
-function updateImageUI (comicUrl, comicTitle, comicNumber, container){
+function updateImageUI (comicUrl, comicTitle, comicNumber){
     let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
 
     currentImageNumber = comicNumber;
