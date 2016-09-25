@@ -78,15 +78,7 @@ let controlButton = Container.template($ =>({
       }
       if (validNext){
         getImg(false, imageNumber, function(comicUrl, comicTitle, comicNumber) {
-          currentImageNumber = comicNumber;
-          currentImageTitle = comicTitle;
-          currentImageUrl = comicUrl;
-          // let title = new Label({top: 5, style: smallStyle, string: comicTitle});
-          // let number = new Label({top: 5, style: smallStyle, string: comicNumber});
-          let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-          application.mainContainer[1].empty();
-          application.mainContainer[1].add(comicImg);
-          application.mainContainer.comicTitle.string = currentImageTitle;
+          updateImageUI(comicUrl, comicTitle, comicNumber, container);
         });
       }
     }
@@ -106,21 +98,25 @@ let LoadButton = Container.template($ => ({
   behavior: Behavior({
     onTouchEnded(container, id, x, y, ticks) {
       var random = Math.round(Math.random()*latestXKCDComicNumber);
-      getImg(false, String(random), function(comicUrl, comicTitle, comicNumber) {
-        // let title = new Label({top: 5, style: smallStyle, string: comicTitle});
-        // let number = new Label({top: 5, style: smallStyle, string: comicNumber});
-        let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-        currentImageNumber = comicNumber;
-        currentImageTitle = comicTitle;
-        currentImageUrl = comicUrl;
-
-        container.container.comicTitle.string = currentImageTitle;
-        container.container[1].empty();
-        container.container[1].add(comicImg);
+      getImg(false, String(random), function(comicUrl, comicTitle, comicNumber, container) {
+        updateImageUI(comicUrl, comicTitle, comicNumber);
       });
     }
   })
 }));
+
+function updateImageUI (comicUrl, comicTitle, comicNumber, container){
+    let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+
+    currentImageNumber = comicNumber;
+    currentImageTitle = comicTitle;
+    currentImageUrl = comicUrl;
+
+    application.mainContainer[1].empty();
+    application.mainContainer[1].add(comicImg);
+    application.mainContainer.comicTitle.string = currentImageTitle;
+
+}
 
 /* Helper function for sending the HTTP request and loading the response */
 function getImg(bool, comicNumber, uiCallback) {
