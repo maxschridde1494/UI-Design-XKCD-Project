@@ -2,6 +2,12 @@
  * Homework
  */
 
+/*Global Variable*/
+var latestXKCDComicNumber;
+var currentImageNumber;
+var currentImageTitle;
+var currentImageUrl;
+
 /*Skins and Styles*/
 let buttonSkin = new Skin ({fill: 'green'});
 let whiteSkin = new Skin ({fill: 'white'});
@@ -20,8 +26,14 @@ let MainContainer = Column.template($ => ({
     left: 0, right: 0, top: 0, bottom: 0, skin: whiteSkin,
     contents: [
       new LoadButton(),
+      // new nextButton({skin: buttonSkin, string: "Previous"}),
       new Line({ 
-          left: 0, right: 0, top: 0,
+          height: 50,
+          contents: [
+            new nextButton({next: false, skin: buttonSkin, string: "Previous"}),
+            new nextButton({next: true, skin: buttonSkin, string: "Next"})
+            // new prevButton({skin: buttonSkin, string: "Previous"})
+          ]
       }),
       new ComicPane(),
     ]
@@ -30,9 +42,48 @@ let MainContainer = Column.template($ => ({
 let ComicPane = Container.template($ => ({
   name: 'comicPane',
   left: 0, right: 0, top: 0, bottom: 0, skin: silverSkin,
-  contents: [
+  contents: []
+}));
 
-  ]
+let nextButton = Container.template($ =>({
+  exclusiveTouch: true,
+  active: true,
+  left: 5,
+  contents:[
+    Label($, {
+      hidden: false,
+      skin: $.skin,
+      string: $.string,
+      style: buttonStyle
+    })
+  ],
+  behavior: Behavior({
+    onTouchEnded: function(container, data){
+      var imageNumber;
+      var validNext = true;
+      if ($.next){
+        if (currentImageNumber < latestXKCDComicNumber){
+          imageNumber = String(currentImageNumber + 1);
+        }else{
+          validNext = false;
+        }
+      }else {
+          imageNumber = String(currentImageNumber - 1);
+      }
+      if (validNext){
+        getImg(false, imageNumber, function(comicUrl, comicTitle, comicNumber) {
+          currentImageNumber = comicNumber;
+          currentImageTitle = comicTitle;
+          currentImageUrl = comicUrl;
+          // let title = new Label({top: 5, style: smallStyle, string: comicTitle});
+          // let number = new Label({top: 5, style: smallStyle, string: comicNumber});
+          let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+          application.mainContainer[2].empty();
+          application.mainContainer[2].add(comicImg);
+        });
+      }
+    }
+  })
 }));
 
 let LoadButton = Container.template($ => ({
@@ -47,32 +98,43 @@ let LoadButton = Container.template($ => ({
   ],
   behavior: Behavior({
     onTouchEnded(container, id, x, y, ticks) {
-      getImg(function(comicUrl, comicTitle, comicNumber) {
-        let title = new Label({top: 5, style: smallStyle, string: comicTitle});
-        let number = new Label({top: 5, style: smallStyle, string: comicNumber});
+      getImg(false, String(currentImageNumber - 1), function(comicUrl, comicTitle, comicNumber) {
+        // let title = new Label({top: 5, style: smallStyle, string: comicTitle});
+        // let number = new Label({top: 5, style: smallStyle, string: comicNumber});
         let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-        //FIXME: hard code, bad style, don't do this;
-        container.container[1].add(title);
-        container.container[1].add(number);
+        currentImageNumber = comicNumber;
+        currentImageTitle = comicTitle;
+        currentImageUrl = comicUrl;
+        container.container[2].empty();
         container.container[2].add(comicImg);
+        trace(currentImageNumber);
       });
     }
   })
 }));
 
 /* Helper function for sending the HTTP request and loading the response */
-function getImg(uiCallback) {
-    var url = 'http://xkcd.com/info.0.json';
-    /*** YOUR CODE HERE ***/
+function getImg(bool, comicNumber, uiCallback) {
+    if (comicNumber == ""){
+      var url = 'http://xkcd.com/info.0.json';
+    }else{
+      var url = getNextImgURL(comicNumber);
+      trace(url);
+    }
     var message = new Message(url);
     
     var promise = message.invoke(Message.JSON);
     promise.then(json => {
       if (0 == message.error && 200 == message.status) {
           try {
-            /*** YOUR CODE HERE ***/
-            trace(json.num);
-            uiCallback(json.img, json.title, json.num);           
+            currentImageUrl = json.img;
+            currentImageTitle = json.title;
+            currentImageNumber = json.num;
+            if (bool){
+              latestXKCDComicNumber = currentImageNumber;
+            }
+
+            uiCallback(currentImageUrl, currentImageTitle, currentImageNumber);           
           }
           catch (e) {
             throw('Web service responded with invalid JSON!\n');
@@ -83,6 +145,10 @@ function getImg(uiCallback) {
       }
     });
 }
+function getNextImgURL(imageNumber){
+  return 'http://xkcd.com/' + imageNumber + '/info.0.json';
+}
+
 
 
 /*
@@ -96,7 +162,7 @@ application.behavior = Behavior({
     mainContainer.name = "mainContainer";
     application.add(mainContainer);
 
-    getImg(function(comicUrl, comicTitle, comicNumber) {
+    getImg(true, "", function(comicUrl, comicTitle, comicNumber) {
         let title = new Label({top: 5, style: smallStyle, string: comicTitle});
         let number = new Label({top: 5, style: smallStyle, string: comicNumber});
         let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
