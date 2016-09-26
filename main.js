@@ -11,10 +11,19 @@
 function createFlickrRequest(methodName){
   var requestURL = FLICKRSTART + "&method=" + methodName
                                 + "&api_key=" + FLICKRAPIKEY 
-                                + "&user_id=" + MYFLICKRUSERID;
-                                + "&format=json";
+                                + "&text=" + currentImageTitle
+                                + "&format=json"
+                                + "&nojsoncallback=1";
   return requestURL;
- }
+}
+function createFlickrSourceUrl(imageId){
+  var sourceURL = FLICKRSTART + "&method=flickr.photos.getSizes"
+                                + "&api_key=" + FLICKRAPIKEY 
+                                + "&photo_id=" + imageId
+                                + "&format=json"
+                                + "&nojsoncallback=1";
+  return sourceURL;
+}
 
 function createImageURL(userID, imageID){
   var imageURL = "https://www.flickr.com/photos/" + userID + "/" + imageID;
@@ -23,18 +32,20 @@ function createImageURL(userID, imageID){
 
 /* Helper function for sending the HTTP request and loading the response */
 function getFlickrImg(url, uiCallback) {
+    var imageSource = "";
     var message = new Message(url);
     
     var promise = message.invoke(Message.JSON);
     promise.then(json => {
       if (0 == message.error && 200 == message.status) {
           try {
-            trace(json + '\n');
-            // trace(text[0] + '\n');
-            // var imageID = json.photos.photo[0]
-            // var imageUserID = json.photos.photo[0].owner;
+            var imageID = json.photos.photo[1].id;
+            var imageUserID = json.photos.photo[1].owner;
 
-            // uiCallback(imageUserID, imageID);           
+            imageSource = createFlickrSourceUrl(imageID);
+            trace(imageSource + '\n');
+            message = new Message(imageSource);
+            return message.invoke(Message.JSON);         
           }
           catch (e) {
             throw('Web service responded with invalid JSON!\n');
@@ -43,7 +54,25 @@ function getFlickrImg(url, uiCallback) {
       else {
           trace('Request Failed - Raw Response Body: *' + '\n' +json+'*'+'\n');
       }
+    }).then(json => {
+      if (0 == message.error && 200 == message.status){
+        try{
+          trace(json.sizes.size[0].source + '\n');
+          var sourceURL = json.sizes.size[0].source;
+          uiCallback(sourceURL);
+        }
+        catch (e) {
+            throw('Web service responded with invalid JSON!\n');
+          }
+      }
+      else {
+          trace('Request Failed - Raw Response Body: *' + '\n' +text+'*'+'\n');
+      }
+      
     });
+}
+function myTrim(x) {
+    return x.replace(/^\s+|\s+$/gm,'');
 }
 
 let flickrButton = Container.template($ =>({
@@ -55,11 +84,11 @@ let flickrButton = Container.template($ =>({
   ],
   behavior: Behavior({
     onTouchEnded: function(container, data){
-      var url = createFlickrRequest("flickr.people.getPublicPhotos");
+      // var url = createFlickrRequest("flickr.people.getPublicPhotos");
+      var url = createFlickrRequest("flickr.photos.search");
       trace(url + '\n');
-      getFlickrImg(url, function(userID, imageID) {
-        var imURL = createImageURL(userID, imageID);
-        updateImageUI(imURL, "Worked", "1");
+      getFlickrImg(url, function(url) {
+        updateImageUI(url, currentImageTitle, "1");
       });
     }
   })
