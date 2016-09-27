@@ -1,8 +1,20 @@
-/*
- * Homework
- */
 
- /*Flickr*/
+/*Skins and Styles*/
+let buttonSkin = new Skin ({fill: 'green'});
+let whiteSkin = new Skin ({fill: 'white'});
+let blueSkin = new Skin ({fill: '#3498db'});
+let silverSkin = new Skin ({fill: '#bdc3c7'});
+
+let buttonStyle = new Style({font: '22px', color: 'white'});
+let headlineStyle = new Style({font: '28px', color: '#aaaaaa'});
+let smallStyle = new Style ({font: '20px', color: 'black'});
+
+
+ /*
+========================
+Flickr:
+========================
+ */
  const FLICKRSTART = "https://api.flickr.com/services/rest/?";
  const MYFLICKRUSERID = "60346343@N06";
  const FLICKRAPIKEY = "b5ebd7807ea15f46892d4309b4ec9d73";
@@ -24,10 +36,28 @@ function createFlickrSourceUrl(imageId){
                                 + "&nojsoncallback=1";
   return sourceURL;
 }
+function stringSplit(str, separator) {
+    var wordArr = str.split(separator);
+    var newStr = wordArr[0];
+    if (wordArr.length > 1){
+      for (var i = 1; i < wordArr.length; i++) {
+        newStr = newStr + "_" + wordArr[i]
+      }
+    }
+    return newStr;
+}
 
-function createImageURL(userID, imageID){
-  var imageURL = "https://www.flickr.com/photos/" + userID + "/" + imageID;
-  return imageURL;
+function updateImageUI (comicUrl, comicTitle, comicNumber){
+    let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+
+    currentImageNumber = comicNumber;
+    currentImageTitle = comicTitle;
+    currentImageUrl = comicUrl;
+
+    application.mainContainer[1].empty();
+    application.mainContainer[1].add(comicImg);
+    application.mainContainer.comicInfo.comicTitle.string = currentImageTitle;
+    application.mainContainer.comicInfo.comicID.string = String(currentImageNumber);
 }
 
 /* Helper function for sending the HTTP request and loading the response */
@@ -71,37 +101,25 @@ function getFlickrImg(url, uiCallback) {
       
     });
 }
-function stringSplit(str, separator) {
-    var wordArr = str.split(separator);
-    var newStr = wordArr[0];
-    if (wordArr.length > 1){
-      for (var i = 1; i < wordArr.length; i++) {
-        newStr = newStr + "_" + wordArr[i]
-      }
-    }
-    return newStr;
-}
 
 let flickrButton = Container.template($ =>({
-  exclusiveTouch: true,
-  active: true,
-  left: 5,
+  exclusiveTouch: true, active: true, left: 5,
   contents:[
     Label($, { hidden: false, skin: $.skin, string: $.string, style: buttonStyle})
   ],
   behavior: Behavior({
     onTouchEnded: function(container, data){
-      // var url = createFlickrRequest("flickr.people.getPublicPhotos");
       var url = createFlickrRequest("flickr.photos.search");
-      trace(url + '\n');
       getFlickrImg(url, function(url) {
-        updateImageUI(url, currentImageTitle, "1");
+        updateImageUI(url, currentImageTitle, "");
       });
     }
   })
 }));
 
  /*
+=====================================
+XKCD Comic
 =====================================
  */
 
@@ -111,18 +129,11 @@ var currentImageNumber;
 var currentImageTitle;
 var currentImageUrl;
 
-/*Skins and Styles*/
-let buttonSkin = new Skin ({fill: 'green'});
-let whiteSkin = new Skin ({fill: 'white'});
-let blueSkin = new Skin ({fill: '#3498db'});
-let silverSkin = new Skin ({fill: '#bdc3c7'});
-
-let buttonStyle = new Style({font: '22px', color: 'white'});
-let headlineStyle = new Style({font: '28px', color: '#aaaaaa'});
-let smallStyle = new Style ({font: '20px', color: 'black'});
-
-// let comicPicUrl = 'http://imgs.xkcd.com/comics/solar_spectrum.png';
 var url = 'http://xkcd.com/info.0.json';
+
+function getNextXKCDImgURL(imageNumber){
+  return 'http://xkcd.com/' + imageNumber + '/info.0.json';
+}
 
 /*Set Up Application*/
 application.behavior = Behavior({
@@ -183,15 +194,10 @@ let ComicPane = Container.template($ => ({
 }));
 
 let controlButton = Container.template($ =>({
-  exclusiveTouch: true,
-  active: true,
-  left: 5,
+  exclusiveTouch: true, active: true, left: 5,
   contents:[
     Label($, {
-      hidden: false,
-      skin: $.skin,
-      string: $.string,
-      style: buttonStyle
+      hidden: false, skin: $.skin, string: $.string, style: buttonStyle
     })
   ],
   behavior: Behavior({
@@ -219,46 +225,12 @@ let controlButton = Container.template($ =>({
   })
 }));
 
-let LoadButton = Container.template($ => ({
-  left: 0, right: 0, top: 0, bottom: 0, skin: blueSkin,
-  active: true,
-  contents: [
-    new Label({
-      left: 0, right:0, top: 0, bottom: 0,
-      style: buttonStyle,
-      string: 'Load Comic'
-    })
-  ],
-  behavior: Behavior({
-    onTouchEnded(container, id, x, y, ticks) {
-      var random = Math.round(Math.random()*latestXKCDComicNumber);
-      getImg(false, String(random), function(comicUrl, comicTitle, comicNumber, container) {
-        updateImageUI(comicUrl, comicTitle, comicNumber);
-      });
-    }
-  })
-}));
-
-function updateImageUI (comicUrl, comicTitle, comicNumber){
-    let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-
-    currentImageNumber = comicNumber;
-    currentImageTitle = comicTitle;
-    currentImageUrl = comicUrl;
-
-    application.mainContainer[1].empty();
-    application.mainContainer[1].add(comicImg);
-    application.mainContainer.comicInfo.comicTitle.string = currentImageTitle;
-    application.mainContainer.comicInfo.comicID.string = String(currentImageNumber);
-
-}
-
 /* Helper function for sending the HTTP request and loading the response */
 function getImg(bool, comicNumber, uiCallback) {
     if (comicNumber == ""){
       var url = 'http://xkcd.com/info.0.json';
     }else{
-      var url = getNextImgURL(comicNumber);
+      var url = getNextXKCDImgURL(comicNumber);
     }
     var message = new Message(url);
     
@@ -283,7 +255,4 @@ function getImg(bool, comicNumber, uiCallback) {
           trace('Request Failed - Raw Response Body: *'+json+'*'+'\n');
       }
     });
-}
-function getNextImgURL(imageNumber){
-  return 'http://xkcd.com/' + imageNumber + '/info.0.json';
 }
