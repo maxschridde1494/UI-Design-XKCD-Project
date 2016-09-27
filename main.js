@@ -21,19 +21,21 @@ Flickr:
  const FLICKRAPISECRECT = "155015b672626031";
 
 function createFlickrRequest(methodName){
-  var requestURL = FLICKRSTART + "&method=" + methodName
-                                + "&api_key=" + FLICKRAPIKEY 
-                                + "&text=" + stringSplit(currentImageTitle, " ")
-                                + "&format=json"
-                                + "&nojsoncallback=1";
+  var requestURL = FLICKRSTART 
+                  + "&method=" + methodName
+                  + "&api_key=" + FLICKRAPIKEY 
+                  + "&text=" + stringSplit(currentImageTitle, " ")
+                  + "&format=json"
+                  + "&nojsoncallback=1";
   return requestURL;
 }
 function createFlickrSourceUrl(imageId){
-  var sourceURL = FLICKRSTART + "&method=flickr.photos.getSizes"
-                                + "&api_key=" + FLICKRAPIKEY 
-                                + "&photo_id=" + imageId
-                                + "&format=json"
-                                + "&nojsoncallback=1";
+  var sourceURL = FLICKRSTART 
+                  + "&method=flickr.photos.getSizes"
+                  + "&api_key=" + FLICKRAPIKEY 
+                  + "&photo_id=" + imageId
+                  + "&format=json"
+                  + "&nojsoncallback=1";
   return sourceURL;
 }
 function stringSplit(str, separator) {
