@@ -11,7 +11,7 @@
 function createFlickrRequest(methodName){
   var requestURL = FLICKRSTART + "&method=" + methodName
                                 + "&api_key=" + FLICKRAPIKEY 
-                                + "&text=" + currentImageTitle
+                                + "&text=" + stringSplit(currentImageTitle, " ")
                                 + "&format=json"
                                 + "&nojsoncallback=1";
   return requestURL;
@@ -71,8 +71,15 @@ function getFlickrImg(url, uiCallback) {
       
     });
 }
-function myTrim(x) {
-    return x.replace(/^\s+|\s+$/gm,'');
+function stringSplit(str, separator) {
+    var wordArr = str.split(separator);
+    var newStr = wordArr[0];
+    if (wordArr.length > 1){
+      for (var i = 1; i < wordArr.length; i++) {
+        newStr = newStr + "_" + wordArr[i]
+      }
+    }
+    return newStr;
 }
 
 let flickrButton = Container.template($ =>({
