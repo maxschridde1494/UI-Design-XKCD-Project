@@ -2,12 +2,27 @@
 /*Skins and Styles*/
 let buttonSkin = new Skin ({fill: 'green'});
 let whiteSkin = new Skin ({fill: 'white'});
-let blueSkin = new Skin ({fill: '#3498db'});
+// let blueSkin = new Skin ({fill: '#3498db'});
 let silverSkin = new Skin ({fill: '#bdc3c7'});
 
-let buttonStyle = new Style({font: '22px', color: 'white'});
-let headlineStyle = new Style({font: '28px', color: '#aaaaaa'});
+//blue grey color scheme
+let blueSkin = new Skin({fill: "#004489"});
+let creamSkin = new Skin({fill: "#E1E1D6"});
+let greyBlueSkin = new Skin({fill: "#D3D9DF"});
+let greySkin = new Skin({fill: "#989898 "});
+let darkGreySkin = new Skin({fill: "#565656"});
+let creamGreySkin = new Skin({fill: "#DBDBCE"});
+let homeButtonSkin = new Skin({fill: 'transparent',
+                      borders: {left: 1, right: 1, top: 1, bottom: 1}, stroke: "white"})
+
+let homeButtonStyle = new Style({font: '35px', color: 'white'});
+let buttonStyle = new Style({font: '20', color: 'white'});
+let headlineStyle = new Style({font: 'bold 50px', color: 'white'});
 let smallStyle = new Style ({font: 'bold 20px', color: 'black'});
+
+var currentScreen;
+
+
 
 
  /*
@@ -50,17 +65,18 @@ function stringSplit(str, separator) {
     return newStr;
 }
 
-function updateImageUI (comicUrl, comicTitle, comicNumber){
+function updateImageUI (comicUrl, comicTitle){
     let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
 
-    currentImageNumber = comicNumber;
     currentImageTitle = comicTitle;
     currentImageUrl = comicUrl;
 
-    application.mainContainer[1].empty();
-    application.mainContainer[1].add(comicImg);
+    application.mainContainer.image_buttons.comicPane.empty();
+    application.mainContainer.image_buttons.comicPane.add(comicImg);
+
+    // application.mainContainer[1].empty();
+    // application.mainContainer[1].add(comicImg);
     application.mainContainer.comicInfo.comicTitle.string = currentImageTitle;
-    application.mainContainer.comicInfo.comicID.string = String(currentImageNumber);
 }
 
 /* Helper function for sending the HTTP request and loading the response */
@@ -74,7 +90,7 @@ function getFlickrImg(url, uiCallback) {
           try {
             var numImages = json.photos.photo.length;
             var imageIndex = 0;
-            trace(numImages + '\n');
+            trace("num images: " + String(numImages) + '\n');
             if (numImages == 0){
               trace("No Images Relating to Title." + '\n');
             }
@@ -82,8 +98,11 @@ function getFlickrImg(url, uiCallback) {
               imageIndex = Math.round(Math.random()*numImages);
               if (imageIndex == 0){
                 imageIndex = 1;
+              }else if (imageIndex == numImages){
+                imageIndex = imageIndex - 1;
               }
             }
+            trace("Calculated Index: " + String(imageIndex) + '\n');
             var imageID = json.photos.photo[imageIndex].id;
             var imageUserID = json.photos.photo[imageIndex].owner;
 
@@ -132,7 +151,7 @@ let flickrButton = Container.template($ =>({
     onTouchEnded: function(container, data){
       var url = createFlickrRequest("flickr.photos.search");
       getFlickrImg(url, function(url) {
-        updateImageUI(url, currentImageTitle, "");
+        updateImageUI(url, currentImageTitle);
       });
     }
   })
@@ -156,61 +175,111 @@ function getNextXKCDImgURL(imageNumber){
   return 'http://xkcd.com/' + imageNumber + '/info.0.json';
 }
 
-/*Set Up Application*/
-application.behavior = Behavior({
-  onLaunch: function(application){
-    application.active = true;
-    application.empty();
-    let mainContainer = new MainContainer();
-    mainContainer.name = "mainContainer";
-    application.add(mainContainer);
+/*Home Screen Template*/
+let homeContainer = Column.template($ =>({
+  left: 0, right: 0, top: 0, bottom: 0, skin: blueSkin,
+  contents:[
+    new Text({name: "homeTitle",
+      top: 30, left: 0, right: 0,
+      string: "Welcome to XKCD Comics.",
+      style: headlineStyle
+    }),
+    new Column({
+      name: 'homeScreenButtons',
+      height: 75,
+      contents:[
+        new homeButton({left: 0, right: 0, string: "   Search Flickr   "}),
+        new homeButton({left: 0, right: 0, string: "   Explore XKCD   "})
+      ]
+    })
+  ]
 
-    getImg(true, "", function(comicUrl, comicTitle, comicNumber) {
-        let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+}));
 
-        application.mainContainer.comicInfo.comicTitle.string = comicTitle;
-        application.mainContainer.comicInfo.comicID.string = String(comicNumber);
-        application.mainContainer[1].add(comicImg);
-      });
-  }
-});
+/*Home Screen Buttons*/
+let homeButton = Container.template($ =>({
+  exclusiveTouch: true, active: true, 
+  left: $.left, right: $.right, height: 75, bottom: 10,
+  contents:[
+    Label($, {
+      hidden: false, skin: homeButtonSkin, string: $.string, style: homeButtonStyle
+    })
+  ],
+  behavior: Behavior({
+    onTouchEnded: function(container, data){
+      if ($.string == "   Explore XKCD   "){
+        application.empty();
+        let mainContainer = new MainContainer();
+        mainContainer.name = "mainContainer";
+        currentScreen = mainContainer;
+        application.add(mainContainer);
+        // application.add(navBar);
+
+        getImg(true, "", function(comicUrl, comicTitle) {
+          let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+
+          application.mainContainer.image_buttons.comicPane.empty();
+          application.mainContainer.image_buttons.comicPane.add(comicImg);
+          application.mainContainer.comicInfo.comicTitle.string = comicTitle;
+        });
+      }else if ($.string == "   Search Flickr   "){
+
+      }
+      else {
+
+      }
+    }
+  })
+}));
 
 /* Main screen layout */
 let MainContainer = Column.template($ => ({
     left: 0, right: 0, top: 0, bottom: 0, skin: whiteSkin,
     contents: [
-      new Line({ 
-          name: 'buttons',
-          height: 50,
-          contents: [
-            new controlButton({skin: buttonSkin, string: "Previous"}),
-            new controlButton({skin: buttonSkin, string: "Next"}),
-            new controlButton({skin: buttonSkin, string: "Random"}),
-            new flickrButton({skin: buttonSkin, string: "Flickr"})
-          ]
-      }),
-      new ComicPane(),
       new Line({
-        name: 'comicInfo', height: 50,
+        name: 'comicInfo', height: 25,
         contents: [
           new Label({name: "comicTitle", 
             // left: 0, right: 0, top: 0, bottom: 0,
             height: 50,
             string: "", style: smallStyle
-          }),
-          new Label({name: "comicID", 
-            // left: 0, right: 0, top: 0, bottom: 0,
-            height: 50,
-            string: "", style: smallStyle
           })
         ]
+      }),
+      new Column({
+        name: 'image_buttons',
+        left: 0, right: 0, top: 5, bottom: 0,
+        contents: [
+          new ComicPane(),
+          new Line({ 
+              name: 'buttons',
+              // height: 50,
+              contents: [
+                new controlButton({skin: buttonSkin, string: "Previous"}),
+                new controlButton({skin: buttonSkin, string: "Next"}),
+                new controlButton({skin: buttonSkin, string: "Random"}),
+                new flickrButton({skin: buttonSkin, string: "Flickr"})
+              ]
+            })
+        ]
       })
+      // new ComicPane(),
+      // new Line({ 
+      //     name: 'buttons',
+      //     height: 50,
+      //     contents: [
+      //       new controlButton({skin: buttonSkin, string: "Previous"}),
+      //       new controlButton({skin: buttonSkin, string: "Next"}),
+      //       new controlButton({skin: buttonSkin, string: "Random"}),
+      //       new flickrButton({skin: buttonSkin, string: "Flickr"})
+      //     ]
+      // })
     ]
 }));
 
 let ComicPane = Container.template($ => ({
   name: 'comicPane',
-  left: 0, right: 0, top: 0, bottom: 0, skin: silverSkin,
+  left: 0, right: 0, top: 5, bottom: 0, skin: silverSkin,
   contents: []
 }));
 
@@ -239,7 +308,7 @@ let controlButton = Container.template($ =>({
       }
       if (validNext){
         getImg(false, imageNumber, function(comicUrl, comicTitle, comicNumber) {
-          updateImageUI(comicUrl, comicTitle, comicNumber, container);
+          updateImageUI(comicUrl, comicTitle);
         });
       }
     }
@@ -254,19 +323,23 @@ function getImg(bool, comicNumber, uiCallback) {
       var url = getNextXKCDImgURL(comicNumber);
     }
     var message = new Message(url);
+
+    trace(url + '\n');
     
     var promise = message.invoke(Message.JSON);
     promise.then(json => {
       if (0 == message.error && 200 == message.status) {
           try {
             currentImageUrl = json.img;
+            trace("image url: " + currentImageUrl + '\n');
             currentImageTitle = json.title;
             currentImageNumber = json.num;
             if (bool){
               latestXKCDComicNumber = currentImageNumber;
+              trace(latestXKCDComicNumber);
             }
 
-            uiCallback(currentImageUrl, currentImageTitle, currentImageNumber);           
+            uiCallback(currentImageUrl, currentImageTitle);           
           }
           catch (e) {
             throw('Web service responded with invalid JSON!\n');
@@ -277,3 +350,64 @@ function getImg(bool, comicNumber, uiCallback) {
       }
     });
 }
+
+/*
+================
+NavigationBar UI
+================
+*/
+
+var NavButton = Container.template($ => ({
+    active: true, top: 2, bottom: 2, right: 2, left: 2,
+    behavior: Behavior({
+        onCreate: function(content){
+            this.upSkin = new Skin({
+                fill: "#004489", 
+                borders: {left: 1, right: 1, top: 1, bottom: 1}, 
+                stroke: "white"
+            });
+            this.downSkin = new Skin({
+                fill: "#D3D9DF", 
+                borders: {left: 1, right: 1, top: 1, bottom: 1}, 
+                stroke: "white"
+            });
+            content.skin = this.upSkin;
+        },
+        onTouchBegan: function(content){
+            content.skin = this.downSkin;
+        },
+        onTouchEnded: function(content){
+            content.skin = this.upSkin;
+            application.remove(currentScreen);  // Remove the old screen from the application
+            currentScreen = new $.nextScreen;  // Make the new screen
+            application.add(currentScreen);  // Add the new screen to the application
+        },
+    }),
+   contents: [
+        Label($, { top: 0, bottom: 0, left: 0, right: 0, 
+            style: new Style({ font: "15px", color: "white" }), 
+            string: $.string})
+   ]
+}));
+
+var navBar = new Line({ bottom: 0, height: 45, left: 0, right: 0,
+    skin: new Skin({ fill: "black" }),
+    contents: [
+        new NavButton({ string: "Flickr Search", nextScreen: MainContainer }),
+        new NavButton({ string: "XKCD Comic", nextScreen: MainContainer }),
+        new NavButton({ string: "Related Flickr", nextScreen: MainContainer }),
+    ]
+});
+
+/*Set Up Application*/
+application.behavior = Behavior({
+  onLaunch: function(application){
+    application.active = true;
+    application.empty();
+    let homeScreen = new homeContainer();
+    homeScreen.name = "homeScreen";
+    currentScreen = homeScreen;
+    application.add(homeScreen);
+  }
+});
+
