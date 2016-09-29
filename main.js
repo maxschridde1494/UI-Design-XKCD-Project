@@ -36,6 +36,7 @@ function createFlickrSourceUrl(imageId){
                   + "&photo_id=" + imageId
                   + "&format=json"
                   + "&nojsoncallback=1";
+  trace(sourceURL + '\n');
   return sourceURL;
 }
 function stringSplit(str, separator) {
@@ -71,8 +72,20 @@ function getFlickrImg(url, uiCallback) {
     promise.then(json => {
       if (0 == message.error && 200 == message.status) {
           try {
-            var imageID = json.photos.photo[1].id;
-            var imageUserID = json.photos.photo[1].owner;
+            var numImages = json.photos.photo.length;
+            var imageIndex = 0;
+            trace(numImages + '\n');
+            if (numImages == 0){
+              trace("No Images Relating to Title." + '\n');
+            }
+            else{
+              imageIndex = Math.round(Math.random()*numImages);
+              if (imageIndex == 0){
+                imageIndex = 1;
+              }
+            }
+            var imageID = json.photos.photo[imageIndex].id;
+            var imageUserID = json.photos.photo[imageIndex].owner;
 
             imageSource = createFlickrSourceUrl(imageID);
             trace(imageSource + '\n');
@@ -89,8 +102,14 @@ function getFlickrImg(url, uiCallback) {
     }).then(json => {
       if (0 == message.error && 200 == message.status){
         try{
-          trace(json.sizes.size[0].source + '\n');
-          var sourceURL = json.sizes.size[0].source;
+          var numImOptions = json.sizes.size.length
+          var sourceURL = "";
+          for (var i = 0; i < numImOptions; i++){
+            if (json.sizes.size[i].label == "Small"){
+              sourceURL = json.sizes.size[i].source
+              break
+            }
+          }
           uiCallback(sourceURL);
         }
         catch (e) {
