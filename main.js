@@ -236,6 +236,12 @@ let homeButton = Container.template($ =>({
   })
 }));
 
+/*Flickr Screen Layout*/
+
+let FlickrContainer = Column.template($ => ({
+
+}));
+
 /* Main screen layout */
 let MainContainer = Column.template($ => ({
     left: 0, right: 0, top: 0, bottom: 0, skin: whiteSkin,
@@ -383,7 +389,10 @@ var NavButton = Container.template($ => ({
               if (currentScreenName == "flickrContainer"){
                 content.skin = this.upSkin;
               }else{
+                var url = createFlickrRequest("flickr.photos.search");
+                getFlickrImg(url, function(){
 
+                });
               }
             }else{
               content.skin = this.upSkin;
