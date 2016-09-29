@@ -1,15 +1,16 @@
 
 /*Skins and Styles*/
-let buttonSkin = new Skin ({fill: 'green'});
+let buttonSkin = new Skin ({fill: 'green', borders:{left: 1, right: 1, bottom: 1, top: 1}, stroke: "black"});
 let whiteSkin = new Skin ({fill: 'white'});
 // let blueSkin = new Skin ({fill: '#3498db'});
 let silverSkin = new Skin ({fill: '#bdc3c7'});
 
 //blue grey color scheme
 let blueSkin = new Skin({fill: "#004489"});
+// let blueSkinBorder = new Skin({fill: "#004489", borders: {left: 5, right: 5, bottom: 5, top: 5}, storke: "#989898 "});
 let creamSkin = new Skin({fill: "#E1E1D6"});
 let greyBlueSkin = new Skin({fill: "#D3D9DF"});
-let greySkin = new Skin({fill: "#989898 "});
+let greySkin = new Skin({fill: "#989898"});
 let darkGreySkin = new Skin({fill: "#565656"});
 let creamGreySkin = new Skin({fill: "#DBDBCE"});
 let homeScreenButtonSkin = new Skin({fill: 'transparent',
@@ -182,23 +183,6 @@ function getFlickrImg(url, uiCallback) {
     });
 }
 
-// let flickrButton = Container.template($ =>({
-//   exclusiveTouch: true, active: true, left: 5,
-//   contents:[
-//     Label($, { hidden: false, skin: $.skin, string: $.string, style: buttonStyle})
-//   ],
-//   behavior: Behavior({
-//     onTouchEnded: function(container, data){
-//       var url = createFlickrRequest("flickr.photos.search");
-//       // trace(url + '\n');
-//       getFlickrImg(url, function(url) {
-//         updateImageUI(url, currentImageTitle);
-//       });
-//     }
-//   })
-// }));
-
-
 /*Home Screen Template*/
 let homeContainer = Column.template($ =>({
   left: 0, right: 0, top: 0, bottom: 0, skin: blueSkin,
@@ -235,8 +219,6 @@ let homeScreenButton = Container.template($ =>({
         application.empty();
         trace("making new container" + '\n');
         let mainContainer = new MainContainer();
-        // mainContainer.image_buttons.add(navBar);
-        trace("made new container" + '\n');
         mainContainer.name = "mainContainer";
         currentScreenName = "mainContainer";
         currentScreen = mainContainer;
@@ -245,9 +227,7 @@ let homeScreenButton = Container.template($ =>({
         getImg(true, "", function(comicUrl, comicTitle) {
           trace("image url: " + comicUrl + '\n');
           let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-          trace("right before" + '\n');
           application.mainContainer.image_buttons.comicPane.add(comicImg);
-          trace("made it after" + '\n');
           application.mainContainer.comicInfo.comicTitle.string = comicTitle;
         });
       }else if ($.string == "   Search Flickr   "){
@@ -300,7 +280,7 @@ let MainContainer = Column.template($ => ({
           }),
           new Line({ 
               name: 'buttons',
-              top: 15, skin: new Skin({fill: 'black'}),
+              top: 15, skin: new Skin({fill: 'white'}),
               contents: [
                 new controlButton({skin: buttonSkin, string: "Previous"}),
                 new controlButton({skin: buttonSkin, string: "Next"}),
@@ -335,12 +315,12 @@ let ComicPane = Container.template($ => ({
 }));
 let ComicPane2 = Container.template($ => ({
   name: 'comicPane2',
-  left: 0, right: 0, top: 5, height: 150, skin: blueSkin,
+  left: 0, right: 0, top: 5, height: 100, skin: blueSkin,
   contents: []
 }));
 
 let controlButton = Container.template($ =>({
-  exclusiveTouch: true, active: true, left: 5, top: 5,
+  exclusiveTouch: true, active: true, left: 5,
   contents:[
     Label($, {
       hidden: false, skin: $.skin, string: $.string, style: buttonStyle
@@ -453,7 +433,16 @@ var NavButton = Container.template($ => ({
               if (currentScreenName == "mainContainer"){
                 content.skin = this.upSkin;
               }else{
+                application.empty();
+                let mainContainer = new MainContainer();
+                mainContainer.name = "mainContainer";
+                currentScreenName = "mainContainer";
+                currentScreen = mainContainer;
+                application.add(mainContainer);
 
+                let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: currentImageUrl});
+                application.mainContainer.image_buttons.comicPane.add(comicImg);
+                application.mainContainer.comicInfo.comicTitle.string = currentImageTitle;
               }
             }else if (content.name == "Flickr"){
               if (currentScreenName == "flickrContainer"){
@@ -488,33 +477,13 @@ var NavButton = Container.template($ => ({
    ]
 }));
 
-// var navBar = new Line({ bottom: 0, height: 45, left: 0, right: 0,
-//     skin: new Skin({ fill: "black" }),
-//     contents: [
-//         new NavButton({ name: "Search", string: "Flickr Search", nextScreen: MainContainer }),
-//         new NavButton({ name: "XKCD", string: "XKCD Comic", nextScreen: MainContainer }),
-//         new NavButton({ name: "Flickr", string: "Related Flickr", nextScreen: MainContainer }),
-//     ]
-// });
-var navBar2 = new Line({ bottom: 0, height: 45, left: 0, right: 0,
-    skin: new Skin({ fill: "black" }),
-    contents: [
-        new NavButton({ name: "Search", string: "Flickr Search", nextScreen: MainContainer }),
-        new NavButton({ name: "XKCD", string: "XKCD Comic", nextScreen: MainContainer }),
-        new NavButton({ name: "Flickr", string: "Related Flickr", nextScreen: MainContainer }),
-    ]
-});
-
-
 /*Set Up Application*/
 application.behavior = Behavior({
   onLaunch: function(application){
     application.active = true;
     application.empty();
     resetGlobalVariables();
-    trace("about to make new homeContainer" + '\n');
     let homeScreen = new homeContainer();
-    trace("made new homeContainer" + '\n');
     homeScreen.name = "homeScreen";
     currentScreen = homeScreen;
     application.add(homeScreen);
