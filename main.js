@@ -18,6 +18,7 @@ let homeButtonSkin = new Skin({fill: 'transparent',
 let homeButtonStyle = new Style({font: '35px', color: 'white'});
 let buttonStyle = new Style({font: '20', color: 'white'});
 let headlineStyle = new Style({font: 'bold 50px', color: 'white'});
+let xkcdTitleStyle = new Style({font: 'bold 25px', color: "#565656"});
 let smallStyle = new Style ({font: 'bold 20px', color: 'black'});
 
 var currentScreen;
@@ -122,7 +123,7 @@ function getFlickrImg(url, uiCallback) {
       if (0 == message.error && 200 == message.status){
         try{
           var numImOptions = json.sizes.size.length
-          var sourceURL = "";
+          var sourceURL = json.sizes.size[0];
           for (var i = 0; i < numImOptions; i++){
             if (json.sizes.size[i].label == "Small"){
               sourceURL = json.sizes.size[i].source
@@ -213,12 +214,13 @@ let homeButton = Container.template($ =>({
         mainContainer.name = "mainContainer";
         currentScreen = mainContainer;
         application.add(mainContainer);
-        // application.add(navBar);
+        // application.mainContainer.add(navBar);
 
         getImg(true, "", function(comicUrl, comicTitle) {
+          trace("image url: " + comicUrl + '\n');
           let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
 
-          application.mainContainer.image_buttons.comicPane.empty();
+          // application.mainContainer.image_buttons.comicPane.empty();
           application.mainContainer.image_buttons.comicPane.add(comicImg);
           application.mainContainer.comicInfo.comicTitle.string = comicTitle;
         });
@@ -242,7 +244,7 @@ let MainContainer = Column.template($ => ({
           new Label({name: "comicTitle", 
             // left: 0, right: 0, top: 0, bottom: 0,
             height: 50,
-            string: "", style: smallStyle
+            string: "", style: xkcdTitleStyle
           })
         ]
       }),
@@ -253,38 +255,28 @@ let MainContainer = Column.template($ => ({
           new ComicPane(),
           new Line({ 
               name: 'buttons',
-              // height: 50,
+              top: 5,
               contents: [
                 new controlButton({skin: buttonSkin, string: "Previous"}),
                 new controlButton({skin: buttonSkin, string: "Next"}),
                 new controlButton({skin: buttonSkin, string: "Random"}),
                 new flickrButton({skin: buttonSkin, string: "Flickr"})
               ]
-            })
+            }),
+          navBar
         ]
       })
-      // new ComicPane(),
-      // new Line({ 
-      //     name: 'buttons',
-      //     height: 50,
-      //     contents: [
-      //       new controlButton({skin: buttonSkin, string: "Previous"}),
-      //       new controlButton({skin: buttonSkin, string: "Next"}),
-      //       new controlButton({skin: buttonSkin, string: "Random"}),
-      //       new flickrButton({skin: buttonSkin, string: "Flickr"})
-      //     ]
-      // })
     ]
 }));
 
 let ComicPane = Container.template($ => ({
   name: 'comicPane',
-  left: 0, right: 0, top: 5, bottom: 0, skin: silverSkin,
+  left: 0, right: 0, top: 5, bottom: 0, skin: blueSkin,
   contents: []
 }));
 
 let controlButton = Container.template($ =>({
-  exclusiveTouch: true, active: true, left: 5,
+  exclusiveTouch: true, active: true, left: 5, top: 5,
   contents:[
     Label($, {
       hidden: false, skin: $.skin, string: $.string, style: buttonStyle
@@ -322,16 +314,12 @@ function getImg(bool, comicNumber, uiCallback) {
     }else{
       var url = getNextXKCDImgURL(comicNumber);
     }
-    var message = new Message(url);
-
-    trace(url + '\n');
-    
+    var message = new Message(url);    
     var promise = message.invoke(Message.JSON);
     promise.then(json => {
       if (0 == message.error && 200 == message.status) {
           try {
             currentImageUrl = json.img;
-            trace("image url: " + currentImageUrl + '\n');
             currentImageTitle = json.title;
             currentImageNumber = json.num;
             if (bool){
