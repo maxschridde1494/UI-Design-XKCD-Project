@@ -18,10 +18,11 @@ let homeButtonSkin = new Skin({fill: 'transparent',
 let homeButtonStyle = new Style({font: '35px', color: 'white'});
 let buttonStyle = new Style({font: '20', color: 'white'});
 let headlineStyle = new Style({font: 'bold 50px', color: 'white'});
-let xkcdTitleStyle = new Style({font: 'bold 25px', color: "#565656"});
+let xkcdTitleStyle = new Style({font: 'bold 20px', color: "#565656"});
 let smallStyle = new Style ({font: 'bold 20px', color: 'black'});
 
 var currentScreen;
+var currentScreenName;
 
 
 
@@ -43,6 +44,7 @@ function createFlickrRequest(methodName){
                   + "&text=" + stringSplit(currentImageTitle, " ")
                   + "&format=json"
                   + "&nojsoncallback=1";
+  trace("image url: " + requestURL + '\n');
   return requestURL;
 }
 function createFlickrSourceUrl(imageId){
@@ -52,7 +54,7 @@ function createFlickrSourceUrl(imageId){
                   + "&photo_id=" + imageId
                   + "&format=json"
                   + "&nojsoncallback=1";
-  trace(sourceURL + '\n');
+  trace("source url: " + sourceURL + '\n');
   return sourceURL;
 }
 function stringSplit(str, separator) {
@@ -130,6 +132,7 @@ function getFlickrImg(url, uiCallback) {
               break
             }
           }
+          trace("source url: " + sourceURL + '\n');
           uiCallback(sourceURL);
         }
         catch (e) {
@@ -151,6 +154,7 @@ let flickrButton = Container.template($ =>({
   behavior: Behavior({
     onTouchEnded: function(container, data){
       var url = createFlickrRequest("flickr.photos.search");
+      // trace(url + '\n');
       getFlickrImg(url, function(url) {
         updateImageUI(url, currentImageTitle);
       });
@@ -212,15 +216,13 @@ let homeButton = Container.template($ =>({
         application.empty();
         let mainContainer = new MainContainer();
         mainContainer.name = "mainContainer";
+        currentScreenName = "mainContainer";
         currentScreen = mainContainer;
         application.add(mainContainer);
-        // application.mainContainer.add(navBar);
 
         getImg(true, "", function(comicUrl, comicTitle) {
           trace("image url: " + comicUrl + '\n');
           let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
-
-          // application.mainContainer.image_buttons.comicPane.empty();
           application.mainContainer.image_buttons.comicPane.add(comicImg);
           application.mainContainer.comicInfo.comicTitle.string = comicTitle;
         });
@@ -238,21 +240,9 @@ let homeButton = Container.template($ =>({
 let MainContainer = Column.template($ => ({
     left: 0, right: 0, top: 0, bottom: 0, skin: whiteSkin,
     contents: [
-      new Line({
-        name: 'comicInfo', height: 25,
-        contents: [
-          new Label({name: "comicTitle", 
-            // left: 0, right: 0, top: 0, bottom: 0,
-            height: 50,
-            string: "", style: xkcdTitleStyle
-          })
-        ]
-      }),
       new Column({
-        name: 'image_buttons',
-        left: 0, right: 0, top: 5, bottom: 0,
+        name: 'comicInfo', height: 75,
         contents: [
-          new ComicPane(),
           new Line({ 
               name: 'buttons',
               top: 5,
@@ -263,6 +253,17 @@ let MainContainer = Column.template($ => ({
                 new flickrButton({skin: buttonSkin, string: "Flickr"})
               ]
             }),
+          new Label({name: "comicTitle", 
+            height: 50,
+            string: "", style: xkcdTitleStyle
+          })
+        ]
+      }),
+      new Column({
+        name: 'image_buttons',
+        left: 0, right: 0, top: 5, bottom: 0,
+        contents: [
+          new ComicPane(),
           navBar
         ]
       })
@@ -347,6 +348,7 @@ NavigationBar UI
 
 var NavButton = Container.template($ => ({
     active: true, top: 2, bottom: 2, right: 2, left: 2,
+    name: $.name,
     behavior: Behavior({
         onCreate: function(content){
             this.upSkin = new Skin({
@@ -365,10 +367,30 @@ var NavButton = Container.template($ => ({
             content.skin = this.downSkin;
         },
         onTouchEnded: function(content){
-            content.skin = this.upSkin;
-            application.remove(currentScreen);  // Remove the old screen from the application
-            currentScreen = new $.nextScreen;  // Make the new screen
-            application.add(currentScreen);  // Add the new screen to the application
+            if (content.name == "Search" && currentScreenName == "searchContainer"){
+              if (currentScreenName == "searchContainer"){
+                content.skin = this.upSkin;
+              }else{
+
+              }
+            }else if (content.name == "XKCD"){
+              if (currentScreenName == "mainContainer"){
+                content.skin = this.upSkin;
+              }else{
+
+              }
+            }else if (content.name == "Flickr"){
+              if (currentScreenName == "flickrContainer"){
+                content.skin = this.upSkin;
+              }else{
+
+              }
+            }else{
+              content.skin = this.upSkin;
+              application.remove(currentScreen);  // Remove the old screen from the application
+              currentScreen = new $.nextScreen;  // Make the new screen
+              application.add(currentScreen);  // Add the new screen to the application
+            }
         },
     }),
    contents: [
@@ -381,9 +403,9 @@ var NavButton = Container.template($ => ({
 var navBar = new Line({ bottom: 0, height: 45, left: 0, right: 0,
     skin: new Skin({ fill: "black" }),
     contents: [
-        new NavButton({ string: "Flickr Search", nextScreen: MainContainer }),
-        new NavButton({ string: "XKCD Comic", nextScreen: MainContainer }),
-        new NavButton({ string: "Related Flickr", nextScreen: MainContainer }),
+        new NavButton({ name: "Search", string: "Flickr Search", nextScreen: MainContainer }),
+        new NavButton({ name: "XKCD", string: "XKCD Comic", nextScreen: MainContainer }),
+        new NavButton({ name: "Flickr", string: "Related Flickr", nextScreen: MainContainer }),
     ]
 });
 
