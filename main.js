@@ -23,10 +23,6 @@ let smallStyle = new Style ({font: 'bold 20px', color: 'black'});
 
 var currentScreen;
 var currentScreenName;
-
-
-
-
  /*
 ========================
 Flickr:
@@ -36,6 +32,22 @@ Flickr:
  const MYFLICKRUSERID = "60346343@N06";
  const FLICKRAPIKEY = "b5ebd7807ea15f46892d4309b4ec9d73";
  const FLICKRAPISECRECT = "155015b672626031";
+
+  /*
+=====================================
+XKCD Comic
+=====================================
+ */
+var latestXKCDComicNumber;
+var currentImageNumber;
+var currentImageTitle;
+var currentImageUrl;
+var currentFlickrImageUrl;
+var url = 'http://xkcd.com/info.0.json';
+
+function getNextXKCDImgURL(imageNumber){
+  return 'http://xkcd.com/' + imageNumber + '/info.0.json';
+}
 
 function createFlickrRequest(methodName){
   var requestURL = FLICKRSTART 
@@ -68,18 +80,33 @@ function stringSplit(str, separator) {
     return newStr;
 }
 
-function updateImageUI (comicUrl, comicTitle){
-    let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+function updateImageUI (imgUrl, comicTitle){
+    let img = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: imgUrl});
 
     currentImageTitle = comicTitle;
-    currentImageUrl = comicUrl;
+    currentImageUrl = imgUrl;
 
     application.mainContainer.image_buttons.comicPane.empty();
-    application.mainContainer.image_buttons.comicPane.add(comicImg);
-
-    // application.mainContainer[1].empty();
-    // application.mainContainer[1].add(comicImg);
+    application.mainContainer.image_buttons.comicPane.add(img);
     application.mainContainer.comicInfo.comicTitle.string = currentImageTitle;
+}
+function updateFlickrUI(flickrImURL, xkcdImURL, xkcdTitle){
+    let flickrImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: flickrImURL});
+    let xkcdImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: xkcdImURL});
+
+    currentImageTitle = xkcdTitle;
+    currentImageUrl = xkcdImURL;
+    currentFlickrImageUrl = flickrImURL;
+
+    trace("about to update flickrContainer" + '\n');
+
+    application.flickrContainer.images.comicTitle.string = currentImageTitle;
+    application.flickrContainer.images.comicPane.empty();
+    application.flickrContainer.images.comicPane2.empty();
+
+    application.flickrContainer.images.comicPane.add(flickrImg);
+    application.flickrContainer.images.comicPane2.add(xkcdImg);
+    trace("done updating flickrContainer" + '\n');
 }
 
 /* Helper function for sending the HTTP request and loading the response */
@@ -162,23 +189,6 @@ let flickrButton = Container.template($ =>({
   })
 }));
 
- /*
-=====================================
-XKCD Comic
-=====================================
- */
-
-/*Global Variable*/
-var latestXKCDComicNumber;
-var currentImageNumber;
-var currentImageTitle;
-var currentImageUrl;
-
-var url = 'http://xkcd.com/info.0.json';
-
-function getNextXKCDImgURL(imageNumber){
-  return 'http://xkcd.com/' + imageNumber + '/info.0.json';
-}
 
 /*Home Screen Template*/
 let homeContainer = Column.template($ =>({
@@ -214,7 +224,9 @@ let homeButton = Container.template($ =>({
     onTouchEnded: function(container, data){
       if ($.string == "   Explore XKCD   "){
         application.empty();
+        trace("making new container" + '\n');
         let mainContainer = new MainContainer();
+        trace("made new container" + '\n');
         mainContainer.name = "mainContainer";
         currentScreenName = "mainContainer";
         currentScreen = mainContainer;
@@ -223,7 +235,9 @@ let homeButton = Container.template($ =>({
         getImg(true, "", function(comicUrl, comicTitle) {
           trace("image url: " + comicUrl + '\n');
           let comicImg = new Picture({left: 0, right: 0, top: 0, bottom: 0, url: comicUrl});
+          trace("right before" + '\n');
           application.mainContainer.image_buttons.comicPane.add(comicImg);
+          trace("made it after" + '\n');
           application.mainContainer.comicInfo.comicTitle.string = comicTitle;
         });
       }else if ($.string == "   Search Flickr   "){
@@ -239,7 +253,19 @@ let homeButton = Container.template($ =>({
 /*Flickr Screen Layout*/
 
 let FlickrContainer = Column.template($ => ({
-
+    left: 0, right: 0, top: 0, bottom: 0, skin: whiteSkin,
+    contents:[
+      new Column({
+        name: 'images',
+        left: 0, right: 0, top: 0, bottom: 0,
+        contents:[
+          new Label({name: 'comicTitle', height: 50, string: "", style: xkcdTitleStyle}),
+          new ComicPane(),
+          new ComicPane2(),
+          navBar2
+        ]
+      })
+    ]
 }));
 
 /* Main screen layout */
@@ -279,6 +305,11 @@ let MainContainer = Column.template($ => ({
 let ComicPane = Container.template($ => ({
   name: 'comicPane',
   left: 0, right: 0, top: 5, bottom: 0, skin: blueSkin,
+  contents: []
+}));
+let ComicPane2 = Container.template($ => ({
+  name: 'comicPane2',
+  left: 0, right: 0, top: 5, height: 150, skin: blueSkin,
   contents: []
 }));
 
@@ -331,7 +362,6 @@ function getImg(bool, comicNumber, uiCallback) {
             currentImageNumber = json.num;
             if (bool){
               latestXKCDComicNumber = currentImageNumber;
-              trace(latestXKCDComicNumber);
             }
 
             uiCallback(currentImageUrl, currentImageTitle);           
@@ -390,8 +420,17 @@ var NavButton = Container.template($ => ({
                 content.skin = this.upSkin;
               }else{
                 var url = createFlickrRequest("flickr.photos.search");
-                getFlickrImg(url, function(){
-
+                getFlickrImg(url, function(sourceURL){
+                  application.empty();
+                  trace("about to create FlickrContainer" + '\n');
+                  let flickrContainer = new FlickrContainer();
+                  trace("made flickr container" + '\n');
+                  flickrContainer.name = "flickrContainer";
+                  currentScreenName = "flickrContainer";
+                  currentScreen = flickrContainer;
+                  application.add(flickrContainer);
+                  trace("currentScreen Name: " + currentScreenName + '\n');
+                  updateFlickrUI(sourceURL, currentImageUrl, currentImageTitle);
                 });
               }
             }else{
@@ -417,6 +456,15 @@ var navBar = new Line({ bottom: 0, height: 45, left: 0, right: 0,
         new NavButton({ name: "Flickr", string: "Related Flickr", nextScreen: MainContainer }),
     ]
 });
+var navBar2 = new Line({ bottom: 0, height: 45, left: 0, right: 0,
+    skin: new Skin({ fill: "black" }),
+    contents: [
+        new NavButton({ name: "Search", string: "Flickr Search", nextScreen: MainContainer }),
+        new NavButton({ name: "XKCD", string: "XKCD Comic", nextScreen: MainContainer }),
+        new NavButton({ name: "Flickr", string: "Related Flickr", nextScreen: MainContainer }),
+    ]
+});
+
 
 /*Set Up Application*/
 application.behavior = Behavior({
