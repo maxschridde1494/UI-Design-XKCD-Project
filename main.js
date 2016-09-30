@@ -24,6 +24,7 @@ let homeScreenButtonStyle = new Style({left: 6, right: 6, top: 6, bottom: 6, fon
 let buttonStyle = new Style({left: 2, right: 2, top: 2, bottom: 2, font: '20', color: 'white'});
 let headlineStyle = new Style({font: 'bold 50px', color: 'white'});
 let xkcdTitleStyle = new Style({font: 'bold 30px', color: "#565656"});
+let noRelatedImagesStyle = new Style({font: 'bold 30px', color: 'white'});
 let smallStyle = new Style ({font: 'bold 20px', color: 'black'});
 
 var currentScreen;
@@ -102,20 +103,24 @@ function updateImageUI (imgUrl, comicTitle){
     application.mainContainer.image_buttons.comicPane.add(img);
     application.mainContainer.comicInfo.comicTitle.string = currentImageTitle;
 }
-function updateFlickrUI(flickrImURL, xkcdImURL, xkcdTitle){
-    let flickrImg = new Picture({left: 5, right: 5, top: 5, bottom: 5, url: flickrImURL});
-    let xkcdImg = new Picture({left: 5, right: 5, top: 5, bottom: 5, url: xkcdImURL});
-
+function updateFlickrUI(bool, flickrImURL, xkcdImURL, xkcdTitle){
     currentImageTitle = xkcdTitle;
     currentImageUrl = xkcdImURL;
     currentFlickrImageUrl = flickrImURL;
-
+    let xkcdImg = new Picture({left: 5, right: 5, top: 5, bottom: 5, url: xkcdImURL});
     application.flickrContainer.images.comicTitle.string = currentImageTitle;
     application.flickrContainer.images.comicPane.empty();
     application.flickrContainer.images.comicPane2.empty();
-
-    application.flickrContainer.images.comicPane.add(flickrImg);
     application.flickrContainer.images.comicPane2.add(xkcdImg);
+
+    if (bool){ //check if Flickr had any matching images
+      let flickrImg = new Picture({left: 5, right: 5, top: 5, bottom: 5, url: flickrImURL});
+      application.flickrContainer.images.comicPane.add(flickrImg);
+    }else{
+      var noRelatedImagesLabel = new Label({left: 0, right: 0, top: 0, bottom: 0,
+        string: "No Matched Images", style: noRelatedImagesStyle});
+      application.flickrContainer.images.comicPane.add(noRelatedImagesLabel);
+    }
 }
 
 /* Helper function for sending the HTTP request and loading the response */
@@ -129,8 +134,10 @@ function getFlickrImg(url, uiCallback) {
           try {
             var numImages = json.photos.photo.length;
             var imageIndex = 0;
+            trace("numImages: " + String(numImages) + '\n');
             if (numImages == 0){
               trace("No Images Relating to Title." + '\n');
+              return ;
             }
             else{
               imageIndex = Math.round(Math.random()*numImages);
@@ -165,10 +172,11 @@ function getFlickrImg(url, uiCallback) {
               break
             }
           }
-          uiCallback(sourceURL);
+          uiCallback(sourceURL, true);
         }
         catch (e) {
-            throw('Web service responded with invalid JSON!\n');
+            // throw('Web service responded with invalid JSON!\n');
+            uiCallback("", false);
           }
       }
       else {
@@ -369,7 +377,11 @@ let controlButton = Container.template($ =>({
         imageNumber = String(Math.round(Math.random()*latestXKCDComicNumber));
       }
       else {
-          imageNumber = String(currentImageNumber - 1);
+          if (currentImageNumber > 0){
+            imageNumber = String(currentImageNumber - 1);
+          }else{
+            validNext = false;
+          }
       }
       if (validNext){
         getImg(false, imageNumber, function(comicUrl, comicTitle, comicNumber) {
@@ -483,14 +495,14 @@ var NavButton = Container.template($ => ({
               }
             }else if (content.name == "Flickr"){
               var url = createFlickrRequest("flickr.photos.search");
-              getFlickrImg(url, function(sourceURL){
+              getFlickrImg(url, function(sourceURL, bool){
                 application.empty();
                 let flickrContainer = new FlickrContainer();
                 flickrContainer.name = "flickrContainer";
                 currentScreenName = "flickrContainer";
                 currentScreen = flickrContainer;
                 application.add(flickrContainer);
-                updateFlickrUI(sourceURL, currentImageUrl, currentImageTitle);
+                updateFlickrUI(bool, sourceURL, currentImageUrl, currentImageTitle);
               });
             }else{
               content.skin = this.upSkin;
